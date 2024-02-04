@@ -9,17 +9,22 @@ import com.example.ddmdemo.respository.DummyRepository;
 import com.example.ddmdemo.service.interfaces.FileService;
 import com.example.ddmdemo.service.interfaces.IndexingService;
 import jakarta.transaction.Transactional;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 import lombok.RequiredArgsConstructor;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.text.PDFTextStripper;
 import org.apache.tika.Tika;
 import org.apache.tika.language.detect.LanguageDetector;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 @Service
@@ -46,12 +51,13 @@ public class IndexingServiceImpl implements IndexingService {
         newEntity.setTitle(title);
 
         var documentContent = extractDocumentContent(documentFile);
+        parseDocumentContent(documentContent, newIndex);
+
         if (detectLanguage(documentContent).equals("SR")) {
             newIndex.setContentSr(documentContent);
         } else {
             newIndex.setContentEn(documentContent);
         }
-        newEntity.setTitle(title);
 
         var serverFilename = fileService.store(documentFile, UUID.randomUUID().toString());
         newIndex.setServerFilename(serverFilename);
@@ -64,6 +70,27 @@ public class IndexingServiceImpl implements IndexingService {
         dummyIndexRepository.save(newIndex);
 
         return serverFilename;
+    }
+
+    private void parseDocumentContent(String documentContent, DummyIndex newIndex) {
+        Pattern pattern = Pattern.compile("Uprava za (.*?),");
+        Matcher matcher = pattern.matcher(documentContent);
+        if (matcher.find()) newIndex.setGovernment(matcher.group(1));
+
+        pattern = Pattern.compile("nivo uprave: (.*?),");
+        matcher = pattern.matcher(documentContent);
+        if (matcher.find()) newIndex.setGovLevel(matcher.group(1));
+
+        pattern = Pattern.compile("nivo uprave: (.*?), (.*?, \\d+, .+?) u");
+        matcher = pattern.matcher(documentContent);
+        if (matcher.find()) newIndex.setGovAddress(matcher.group(2));
+
+        pattern = Pattern.compile("Potpisnik ugovora za klijenta \\r\\n(.*?) \\r");
+        matcher = pattern.matcher(documentContent);
+        if (matcher.find()) {
+            newIndex.setName(matcher.group(1).split(" ")[0]);
+            newIndex.setSurname(matcher.group(1).split(" ")[1]);
+        }
     }
 
     private String extractDocumentContent(MultipartFile multipartPdfFile) {
@@ -97,13 +124,13 @@ public class IndexingServiceImpl implements IndexingService {
         try {
             trueMimeType = contentAnalyzer.detect(file.getBytes());
             specifiedMimeType =
-                Files.probeContentType(Path.of(Objects.requireNonNull(file.getOriginalFilename())));
+                    Files.probeContentType(Path.of(Objects.requireNonNull(file.getOriginalFilename())));
         } catch (IOException e) {
             throw new StorageException("Failed to detect mime type for file.");
         }
 
         if (!trueMimeType.equals(specifiedMimeType) &&
-            !(trueMimeType.contains("zip") && specifiedMimeType.contains("zip"))) {
+                !(trueMimeType.contains("zip") && specifiedMimeType.contains("zip"))) {
             throw new StorageException("True mime type is different from specified one, aborting.");
         }
 

@@ -1,0 +1,41 @@
+<div class="container">
+	<span class="my-13 my-lg-2" style="margin-left: 20px;">Tokens for advanced search: content_sr, content_en, name, surname, government, gov_address, gov_level</span><br/>
+	<span class="my-13 my-lg-2" style="margin-left: 20px;">Usage: name:Marko AND/OR/NOT surname:Markovic</span>
+
+	<form class="form-inline my-13 my-lg-2" style="justify-content: center;">
+	
+		<input class="form-control mr-sm-2" style="width: 80%;" type="search" name="search" [(ngModel)]="query"
+			placeholder="Search" aria-label="Search" />
+		<input class="form-control mr-sm-2" type="checkbox" name="isAdvanced" [(ngModel)]="isAdvanced"/>
+		<span class="mr-sm-3">Is Advanced?</span>
+		<button class="btn btn-outline-success my-2 my-sm-0" (click)="onSubmit()">
+			Search
+		</button>
+	</form>
+
+	<div class="mt-4 mb-4" *ngIf="searchDone">
+		<header>
+			<h3>Search Result list</h3>
+		</header>
+		<div class="card" *ngFor="let item of fileInfos">
+			<div class="row">
+				<div>
+					<div class="p-4">
+						<h5>{{item.title}}</h5>
+						<span>{{item.highlight }}</span>
+						<p class="my-sm-0">File: <a href="javascript:void(0);" (click)="download(item.serverFilename)">{{item.serverFilename}} </a>
+						</p>
+						<p class="my-sm-0">Government: {{item.government}} </p>
+						<p class="my-sm-0">Address: {{item.govAddress}} </p>
+						<p class="my-sm-0">Government Level: {{item.govLevel}} </p>
+						<p class="my-sm-0">Signed By: {{item.name}} {{item.surname}}</p>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div *ngIf="fileInfos.length === 0">
+			<p>There is no document that matches the query</p>
+		</div>
+	</div>
+
+</div>

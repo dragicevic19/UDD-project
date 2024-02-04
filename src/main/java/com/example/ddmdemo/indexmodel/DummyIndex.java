@@ -5,10 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.springframework.data.elasticsearch.annotations.Document;
-import org.springframework.data.elasticsearch.annotations.Field;
-import org.springframework.data.elasticsearch.annotations.FieldType;
-import org.springframework.data.elasticsearch.annotations.Setting;
+import org.springframework.data.elasticsearch.annotations.*;
 
 @Getter
 @Setter
@@ -25,6 +22,7 @@ public class DummyIndex {
     private String title;
 
     @Field(type = FieldType.Text, store = true, name = "content_sr", analyzer = "serbian_simple", searchAnalyzer = "serbian_simple")
+    @HighlightField
     private String contentSr;
 
     @Field(type = FieldType.Text, store = true, name = "content_en", analyzer = "english", searchAnalyzer = "english")
@@ -35,4 +33,22 @@ public class DummyIndex {
 
     @Field(type = FieldType.Integer, store = true, name = "database_id")
     private Integer databaseId;
+
+    @Field(type = FieldType.Text, store = true, name = "name", analyzer = "serbian_simple", searchAnalyzer = "serbian_simple")
+    private String name;
+
+    @Field(type = FieldType.Text, store = true, name = "surname", analyzer = "serbian_simple", searchAnalyzer = "serbian_simple")
+    private String surname;
+
+    @Field(type = FieldType.Text, store = true, name = "government", analyzer = "serbian_simple", searchAnalyzer = "serbian_simple")
+    private String government;
+
+    @Field(type = FieldType.Text, store = true, name = "gov_address", analyzer = "serbian_simple", searchAnalyzer = "serbian_simple")
+    private String govAddress;
+
+    @Field(type = FieldType.Text, store = true, name = "gov_level", analyzer = "serbian_simple", searchAnalyzer = "serbian_simple")
+    private String govLevel;
+
+    private String highlight;
+
 }

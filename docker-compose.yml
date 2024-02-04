@@ -11,13 +11,6 @@ services:
       - "9200:9200"
     networks:
       - ddmdemo-network
-#    command: >
-#      bash -c '
-#      if ! elasticsearch-plugin list | grep -q "analysis-icu"; then
-#        elasticsearch-plugin install analysis-icu
-#      else
-#        tail -f /dev/null &
-#      fi'
     restart: always
 
   logstash:
