@@ -11,10 +11,19 @@ import { ToastrService } from 'ngx-toastr';
 })
 export class SearchComponent implements OnInit {
 
+
   query = "";
   fileInfos : any = [];
   searchDone = false;
   isAdvanced = false;
+  isFieldSearch = false;
+  addressQuery = "";
+  radiusQuery = "";
+
+  // currentPage = 1;  // Trenutna stranica
+  // row = 4;  // Veličina stranice
+  // totalItems = 0;  // Ukupan broj poruka
+  // totalPages = 0;
   
   constructor(private searchService: SearchService,
      private router: Router,
@@ -24,20 +33,60 @@ export class SearchComponent implements OnInit {
 
   }
 
+  onAdvancedSearchClicked() {
+    this.isAdvanced = !this.isAdvanced;
+    this.isFieldSearch = false;
+  }
+  onFieldSearchClick() {
+    this.isFieldSearch = !this.isFieldSearch;
+    this.isAdvanced = false;
+  }
+
   onSubmit() {
     if (this.query.startsWith('"') && this.query.endsWith('"')) {
       this.phrasequery(this.query.replaceAll('"', ''));
       return;
     }
+    if (this.isFieldSearch){
+      const obj = {keywords: this.query.split(':')};
+      this.fieldSearch(obj);
+      return;
+    }
     const tokens = this.query.split(' '); 
     const obj = {keywords: tokens};
-    // if (tokens.some(t => ['AND', 'OR', 'NOT'].includes(t.toUpperCase()))) {
     if (this.isAdvanced) {
       this.advancedSearch(obj);
     }
     else {
       this.simpleSearch(obj);
     }
+  }
+
+  onGeoLocSearch() {
+    const obj = {address: this.addressQuery, radius: this.radiusQuery};
+    this.searchService.geoSearch(obj).subscribe({
+      next: (res: any) => {
+        this.fileInfos = res.content;
+        this.searchDone = true;
+      },
+      error: (err) => {
+        this.toastrService.error(err.error.message);
+        console.log(err);
+      }
+    })
+  }
+
+  fieldSearch(obj: any) {
+     this.searchService.fieldSearch(obj).subscribe({
+      next: (res: any) => {
+        this.fileInfos = res.content;
+        this.searchDone = true;
+      },
+      error: (err) => {
+        this.toastrService.error(err.error.message);
+        console.log(err);
+      }
+    })
   }
 
   simpleSearch(obj: any) {
@@ -90,6 +139,13 @@ export class SearchComponent implements OnInit {
         console.log(err);
       }
     })
+  }
+  
+  onPageChange(pageNumber: number) {
+    this.onSubmit();
+  }
 
+  getPageArray(totalPages: number): number[] {
+    return Array(totalPages).fill(0).map((x, i) => i + 1);
   }
 }

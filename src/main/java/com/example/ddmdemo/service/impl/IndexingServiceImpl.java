@@ -13,32 +13,34 @@ import jakarta.transaction.Transactional;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.text.PDFTextStripper;
 import org.apache.tika.Tika;
 import org.apache.tika.language.detect.LanguageDetector;
+import org.elasticsearch.common.geo.GeoPoint;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
+import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class IndexingServiceImpl implements IndexingService {
 
     private final DummyIndexRepository dummyIndexRepository;
-
     private final DummyRepository dummyRepository;
-
     private final FileService fileService;
-
     private final LanguageDetector languageDetector;
-
+    private final GeoService geoService;
 
     @Override
     @Transactional
@@ -69,7 +71,18 @@ public class IndexingServiceImpl implements IndexingService {
         newIndex.setDatabaseId(savedEntity.getId());
         dummyIndexRepository.save(newIndex);
 
+        writeLogs(newIndex);
         return serverFilename;
+    }
+
+    private void writeLogs(DummyIndex newIndex) {
+        log.info("STATISTIC-LOG indexDocument -> employee : " + newIndex.getName().concat(" ").concat(newIndex.getSurname()));
+        log.info("STATISTIC-LOG indexDocument -> gov : " + newIndex.getGovernment());
+        try {
+            log.info("STATISTIC-LOG indexDocument -> city :" + newIndex.getGovAddress().split(",")[2]);
+        } catch (IndexOutOfBoundsException e) {
+            e.printStackTrace();
+        }
     }
 
     private void parseDocumentContent(String documentContent, DummyIndex newIndex) {
@@ -83,15 +96,20 @@ public class IndexingServiceImpl implements IndexingService {
 
         pattern = Pattern.compile("nivo uprave: (.*?), (.*?, \\d+, .+?) u");
         matcher = pattern.matcher(documentContent);
-        if (matcher.find()) newIndex.setGovAddress(matcher.group(2));
+        if (matcher.find()) {
+            newIndex.setGovAddress(matcher.group(2));
+            var coords = geoService.extractCoordinates(newIndex.getGovAddress());
+            newIndex.setGeoLocation(new GeoPoint(coords.get(0), coords.get(1)));
+        }
 
-        pattern = Pattern.compile("Potpisnik ugovora za klijenta \\r\\n(.*?) \\r");
+        pattern = Pattern.compile("\n(.*?) \r\nPotpisnik ugovora za klijenta");
         matcher = pattern.matcher(documentContent);
         if (matcher.find()) {
             newIndex.setName(matcher.group(1).split(" ")[0]);
             newIndex.setSurname(matcher.group(1).split(" ")[1]);
         }
     }
+
 
     private String extractDocumentContent(MultipartFile multipartPdfFile) {
         String documentContent;

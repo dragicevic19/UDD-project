@@ -1,5 +1,6 @@
 package com.example.ddmdemo.controller;
 
+import com.example.ddmdemo.dto.GeoLocSearchQuery;
 import com.example.ddmdemo.dto.SearchPhraseQueryDTO;
 import com.example.ddmdemo.dto.SearchQueryDTO;
 import com.example.ddmdemo.indexmodel.DummyIndex;
@@ -24,6 +25,12 @@ public class SearchController {
         return searchService.simpleSearch(simpleSearchQuery.keywords(), pageable);
     }
 
+    @PostMapping("/field")
+    public Page<DummyIndex> fieldSearch(@RequestBody SearchQueryDTO simpleSearchQuery,
+                                         Pageable pageable) {
+        return searchService.fieldSearch(simpleSearchQuery.keywords(), pageable);
+    }
+
     @PostMapping("/advanced")
     public Page<DummyIndex> advancedSearch(@RequestBody SearchQueryDTO advancedSearchQuery,
                                            Pageable pageable) {
@@ -35,4 +42,11 @@ public class SearchController {
                                            Pageable pageable) {
         return searchService.phraseSearch(phraseQuery.query(), pageable);
     }
+
+    @PostMapping("/geo")
+    public Page<DummyIndex> geoSearch(@RequestBody GeoLocSearchQuery query,
+                                           Pageable pageable) {
+        return searchService.geoSearch(query.address(), query.radius(), pageable);
+    }
+
 }

@@ -15,4 +15,8 @@ public interface SearchService {
     Page<DummyIndex> advancedSearch(List<String> expression, Pageable pageable);
 
     Page<DummyIndex> phraseSearch(String query, Pageable pageable);
+
+    Page<DummyIndex> fieldSearch(List<String> keywords, Pageable pageable);
+
+    Page<DummyIndex> geoSearch(String address, String radius, Pageable pageable);
 }

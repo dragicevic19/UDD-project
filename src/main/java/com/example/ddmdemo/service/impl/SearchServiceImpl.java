@@ -1,6 +1,10 @@
 package com.example.ddmdemo.service.impl;
 
+import co.elastic.clients.elasticsearch._types.GeoDistanceType;
+import co.elastic.clients.elasticsearch._types.GeoLocation;
+import co.elastic.clients.elasticsearch._types.LatLonGeoLocation;
 import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
+import co.elastic.clients.elasticsearch._types.query_dsl.GeoDistanceQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import com.example.ddmdemo.exceptionhandling.exception.MalformedQueryException;
 import com.example.ddmdemo.indexmodel.DummyIndex;
@@ -33,6 +37,7 @@ import java.util.stream.Stream;
 public class SearchServiceImpl implements SearchService {
 
     private final ElasticsearchOperations elasticsearchTemplate;
+    private final GeoService geoService;
 
     @Override
     public Page<DummyIndex> simpleSearch(List<String> keywords, Pageable pageable) {
@@ -58,6 +63,63 @@ public class SearchServiceImpl implements SearchService {
                         .withPageable(pageable);
 
         return runQuery(searchQueryBuilder.build());
+    }
+
+    @Override
+    public Page<DummyIndex> fieldSearch(List<String> expression, Pageable pageable) {
+        if (expression.size() != 2) {
+            throw new MalformedQueryException("Search query malformed.");
+        }
+
+        var v = new HighlightFieldParameters.HighlightFieldParametersBuilder().withMatchedFields("content_sr").withType("plain").withFragmentSize(500).withFragmentOffset(250).withPostTags("</b>").withPreTags("<b>");
+        var c = new HighlightParameters.HighlightParametersBuilder().withType("plain").withRequireFieldMatch(false).build();
+
+        String field = expression.get(0);
+        String value = expression.get(1);
+
+        var searchQueryBuilder =
+                new NativeQueryBuilder().withQuery(buildFieldSearchQuery(field, value))
+                        .withHighlightQuery(new HighlightQuery(new Highlight(c, List.of(new HighlightField("content_sr", v.build()))), String.class))
+                        .withPageable(pageable);
+
+        return runQuery(searchQueryBuilder.build());
+    }
+
+    @Override
+    public Page<DummyIndex> geoSearch(String address, String radius, Pageable pageable) {
+        var coords = geoService.extractCoordinates(address);
+
+        var v = new HighlightFieldParameters.HighlightFieldParametersBuilder().withMatchedFields("content_sr").withType("plain").withFragmentSize(500).withFragmentOffset(250).withPostTags("</b>").withPreTags("<b>");
+        var c = new HighlightParameters.HighlightParametersBuilder().withType("plain").withRequireFieldMatch(false).build();
+        var searchQueryBuilder =
+                new NativeQueryBuilder().withQuery(buildGeoQuery(coords, radius))
+                        .withHighlightQuery(new HighlightQuery(new Highlight(c, List.of(new HighlightField("content_sr", v.build()))), String.class))
+                        .withPageable(pageable);
+
+        return runQuery(searchQueryBuilder.build());
+    }
+
+    private Query buildGeoQuery(List<Double> coords, String radius) {
+        var geoLoc = new GeoLocation.Builder()
+                .latlon(new LatLonGeoLocation.Builder()
+                        .lon(coords.get(0)).lat(coords.get(1))
+                        .build())
+                .build();
+
+        return GeoDistanceQuery.of(x -> {
+            x.field("geo_location");
+            x.distance(radius + "km");
+            x.distanceType(GeoDistanceType.Plane);
+            x.location(geoLoc);
+            return x;
+        })._toQuery();
+    }
+
+    private Query buildFieldSearchQuery(String field, String value) {
+        return BoolQuery.of(q -> q.must(mb -> mb.bool(b -> {
+            b.should(sb -> sb.matchPhrase(m -> m.field(field).query(value).slop(1)));
+            return b;
+        })))._toQuery();
     }
 
     private Query buildPhraseSearchQuery(String query) {

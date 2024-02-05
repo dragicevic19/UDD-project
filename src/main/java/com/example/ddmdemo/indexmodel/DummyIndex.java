@@ -1,14 +1,13 @@
 package com.example.ddmdemo.indexmodel;
 
 import jakarta.persistence.Id;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
+import org.elasticsearch.common.geo.GeoPoint;
 import org.springframework.data.elasticsearch.annotations.*;
 
 @Getter
 @Setter
+@ToString
 @NoArgsConstructor
 @AllArgsConstructor
 @Document(indexName = "dummy_index")
@@ -50,5 +49,9 @@ public class DummyIndex {
     private String govLevel;
 
     private String highlight;
+
+    @GeoPointField
+    @Field(type = FieldType.Double, store = true, name = "geo_location")
+    private GeoPoint geoLocation;
 
 }

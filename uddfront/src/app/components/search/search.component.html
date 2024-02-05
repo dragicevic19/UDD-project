@@ -1,16 +1,44 @@
 <div class="container">
-	<span class="my-13 my-lg-2" style="margin-left: 20px;">Tokens for advanced search: content_sr, content_en, name, surname, government, gov_address, gov_level</span><br/>
-	<span class="my-13 my-lg-2" style="margin-left: 20px;">Usage: name:Marko AND/OR/NOT surname:Markovic</span>
+	<span class="my-13 my-lg-2" style="margin-left: 20px;">Tokens for advanced and field search: <b>content_sr,
+			content_en, name, surname, government, gov_address, gov_level</b></span><br />
+	<span class="my-13 my-lg-2" style="margin-left: 20px;">AdvancedSearch Usage: <b>name:Marko AND/OR/NOT
+			surname:Markovic</b></span><br />
+	<span class="my-13 my-lg-2" style="margin-left: 20px;">FieldSearch Usage: <b>name:Marko</b></span>
 
 	<form class="form-inline my-13 my-lg-2" style="justify-content: center;">
-	
+
 		<input class="form-control mr-sm-2" style="width: 80%;" type="search" name="search" [(ngModel)]="query"
 			placeholder="Search" aria-label="Search" />
-		<input class="form-control mr-sm-2" type="checkbox" name="isAdvanced" [(ngModel)]="isAdvanced"/>
-		<span class="mr-sm-3">Is Advanced?</span>
-		<button class="btn btn-outline-success my-2 my-sm-0" (click)="onSubmit()">
-			Search
-		</button>
+		<div style="display: flex; justify-content: center;align-items: left; flex-direction: column;">
+			<div>
+				<input class="form-control mr-sm-2" type="checkbox" name="isFieldSearch" (click)="onFieldSearchClick()"
+					[(ngModel)]="isFieldSearch" />
+				<span class="mr-sm-3">FieldSearch</span>
+			</div>
+			<div>
+				<input class="form-control mr-sm-2" type="checkbox" name="isAdvanced"
+					(click)="onAdvancedSearchClicked()" [(ngModel)]="isAdvanced" />
+				<span class="mr-sm-3">AdvancedSearch</span>
+			</div>
+			<button class="btn btn-outline-success my-2 my-sm-0" (click)="onSubmit()">
+				Search
+			</button>
+		</div>
+
+		<div style="display: flex;">
+			<div>
+
+			<input class="form-control mr-sm-2" style="width: 90%;" type="search" name="addressSerach" [(ngModel)]="addressQuery"
+				placeholder="Address" aria-label="Search" />
+			<input class="form-control mr-sm-2" style="width: 90%;" type="search" name="radiusSearch" [(ngModel)]="radiusQuery"
+				placeholder="Radius" aria-label="Search" />
+			</div>
+
+			<button class="btn btn-outline-success my-2 my-sm-0" (click)="onGeoLocSearch()">
+				GeoLocation Search
+			</button>
+		</div>
+
 	</form>
 
 	<div class="mt-4 mb-4" *ngIf="searchDone">
@@ -23,7 +51,8 @@
 					<div class="p-4">
 						<h5>{{item.title}}</h5>
 						<span>{{item.highlight }}</span>
-						<p class="my-sm-0">File: <a href="javascript:void(0);" (click)="download(item.serverFilename)">{{item.serverFilename}} </a>
+						<p class="my-sm-0">File: <a href="javascript:void(0);"
+								(click)="download(item.serverFilename)">{{item.serverFilename}} </a>
 						</p>
 						<p class="my-sm-0">Government: {{item.government}} </p>
 						<p class="my-sm-0">Address: {{item.govAddress}} </p>
@@ -37,5 +66,24 @@
 			<p>There is no document that matches the query</p>
 		</div>
 	</div>
+	<!-- <div class="container mt-2" style="display: flex; justify-content: center;">
+		<nav>
+			<ul class="pagination" style="cursor: pointer;">
+				<li class="page-item" [class.disabled]="currentPage === 1">
+					<a class="page-link" (click)="onPageChange(currentPage - 1)" aria-label="Previous">
+						<span aria-hidden="true">&laquo;</span>
+					</a>
+				</li>
+				<li class="page-item" *ngFor="let page of getPageArray(totalPages)" [class.active]="currentPage === page">
+					<a class="page-link" (click)="onPageChange(page)">{{ page }}</a>
+				</li>
+				<li class="page-item" [class.disabled]="currentPage === totalPages">
+					<a class="page-link" (click)="onPageChange(currentPage + 1)" aria-label="Next">
+						<span aria-hidden="true">&raquo;</span>
+					</a>
+				</li>
+			</ul>
+		</nav>
+	</div> -->
 
 </div>

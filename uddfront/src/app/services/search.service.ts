@@ -25,4 +25,12 @@ export class SearchService {
   downloadFile(serverFilename: string) {
     return this.http.get(`${this.baseUrl}/api/file/${serverFilename}`, {responseType: 'blob'});
   }
+
+  fieldSearch(keywords: any) {
+    return this.http.post(`${this.baseUrl}/api/search/field`, keywords);
+  }
+
+  geoSearch(obj: any) {
+    return this.http.post(`${this.baseUrl}/api/search/geo`, obj);
+  }
 }
