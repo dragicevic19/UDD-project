@@ -99,7 +99,7 @@ public class IndexingServiceImpl implements IndexingService {
         if (matcher.find()) {
             newIndex.setGovAddress(matcher.group(2));
             var coords = geoService.extractCoordinates(newIndex.getGovAddress());
-            newIndex.setGeoLocation(new GeoPoint(coords.get(0), coords.get(1)));
+            newIndex.setGeoLocation(new GeoPoint(coords.get(1), coords.get(0)));
         }
 
         pattern = Pattern.compile("\n(.*?) \r\nPotpisnik ugovora za klijenta");

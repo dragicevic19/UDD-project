@@ -22,15 +22,16 @@ public class GeoService {
         String longitude = "";
         String latitude = "";
 
-        Pattern pattern = Pattern.compile(
-                """
-                        "lon": "(\\d.]+)",
-                        "lat": "(\\d.]+)"
-                        """);
+        Pattern pattern = Pattern.compile("\"lon\":\"([\\d.]+)\"");
         Matcher matcher = pattern.matcher(response);
         if (matcher.find()) {
             longitude = matcher.group(1);
-            latitude = matcher.group(2);
+        }
+
+        pattern = Pattern.compile("\"lat\":\"([\\d.]+)\"");
+        matcher = pattern.matcher(response);
+        if (matcher.find()) {
+            latitude = matcher.group(1);
         }
 
         return List.of(Double.parseDouble(longitude), Double.parseDouble(latitude));
